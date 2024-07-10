@@ -1,16 +1,9 @@
 This folder includes the scripts and file management for processing the results from Henry Luo's experimental runs at Duke. 
 
-There are two main directories -- scripts/ and data/ 
-Each data set will have a folder in scripts, and each folder will have a folder specifically for that data set. 
+Experimental data from Rabi Oscillations go in a labeled folder in the data/ folder. Experiment IDs and waiting times can be dumped in a metadata.txt file
 
-There is a file called index.py which includes dictionary data for all the data sets and useful metadata. 
+The script "Full_calibration.ipynb" returns updated t_w times and the amplitude compensation terms. 
 
-In scripts we will have one script for each of the major processing operations:
-1. Reading in the Rabi data
-2. Combining the t_w data to extract theta and theta_dot. This will also produce the calibrated t_w data and the scaled Rabi frequencies. 
-3. ZNE for Rabi data
-4. ZNE for MS data (strong)
-5. ZNE for MS data (weak)
-6. ZNE for TFIM data 
-7. ZNE for GHZ States (maybe?)
+It require manually entering the experiment ids (in order) and adding the waiting times as a list. 
 
+When running the script, be sure to refresh the kernel. Also, if it is the first time running a data set, set the foldername, and enter 'y' into the first prompt, and add any useful experimental info when prompted for metadata. this is purely for record keeping. 
