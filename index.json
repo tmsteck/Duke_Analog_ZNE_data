@@ -1,0 +1,17 @@
+{
+    "testing full calibration script": {
+        "folder": "EXAMPLE_CALIBRATION",
+        "metadata": "Example data for testing the script -- ",
+        "subfolders": [
+            "000558105-RFSoCSequence.h5",
+            "000558101-RFSoCSequence.h5",
+            "000558104-RFSoCSequence.h5",
+            "000558100-RFSoCSequence.h5",
+            "000558103-RFSoCSequence.h5",
+            "000558098-RFSoCSequence.h5",
+            "000558106-RFSoCSequence.h5",
+            "000558099-RFSoCSequence.h5",
+            "000558102-RFSoCSequence.h5"
+        ]
+    }
+}
