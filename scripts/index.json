@@ -1,0 +1,126 @@
+{
+    "this is some extra metadata to add the time or the experiment name or someting": {
+        "folder": "EXAMPLE_CALIBRATION",
+        "metadata": "Example Meta data for EXAMPLE_CALIBRATION: \nexperiment_names = ['098', '099', '100', '101', '102', '103','104', '105', '106']\nt_w = [0, 0.08327141, 0.24981422,0.49962844,0.66617125,0.83271406,1.2490711,1.66542813,2.49814219]",
+        "subfolders": [
+            "000558105-RFSoCSequence.h5",
+            "000558101-RFSoCSequence.h5",
+            "000558104-RFSoCSequence.h5",
+            "000558100-RFSoCSequence.h5",
+            "000558103-RFSoCSequence.h5",
+            "000558098-RFSoCSequence.h5",
+            "000558106-RFSoCSequence.h5",
+            "000558099-RFSoCSequence.h5",
+            "000558102-RFSoCSequence.h5"
+        ]
+    },
+    "first calibration for jij": {
+        "folder": "PRE_JIJ_FIRST_MEASURE",
+        "metadata": "first calibration for JIJ experiment 8:39pm. Will extract Omega scaling + new t_w times\n\nexperiment_names = ['411','412', '413', '414', '415', '416', '417','418', '419']\nt_w_machine_time = [0.0, 0.10772132170302284, 0.3231639651090684, 0.6463279302181366, 0.8617705736241821, 1.0772132170302273, 1.615819825545341, 2.154426434060455, 3.231639651090682]",
+        "subfolders": [
+            "000558414-RFSoCSequence.h5",
+            "000558411-RFSoCSequence.h5",
+            "000558415-RFSoCSequence.h5",
+            "000558419-RFSoCSequence.h5",
+            "000558412-RFSoCSequence.h5",
+            "000558416-RFSoCSequence.h5",
+            "000558418-RFSoCSequence.h5",
+            "000558413-RFSoCSequence.h5",
+            "000558417-RFSoCSequence.h5"
+        ]
+    },
+    "first check of calibration": {
+        "folder": "PRE_JIJ_FIRST_MEASURE",
+        "metadata": "first calibration for JIJ experiment 8:39pm. Will extract Omega scaling + new t_w times\n\nexperiment_names = ['411','412', '413', '414', '415', '416', '417','418', '419']\nt_w_machine_time = [0.0, 0.10772132170302284, 0.3231639651090684, 0.6463279302181366, 0.8617705736241821, 1.0772132170302273, 1.615819825545341, 2.154426434060455, 3.231639651090682]",
+        "subfolders": [
+            "000558414-RFSoCSequence.h5",
+            "000558411-RFSoCSequence.h5",
+            "000558415-RFSoCSequence.h5",
+            "000558419-RFSoCSequence.h5",
+            "000558412-RFSoCSequence.h5",
+            "000558416-RFSoCSequence.h5",
+            "000558418-RFSoCSequence.h5",
+            "000558413-RFSoCSequence.h5",
+            "000558417-RFSoCSequence.h5"
+        ]
+    },
+    "first check of calibration for Jij experiment": {
+        "folder": "PRE_JIJ_CHECK_CALIBRATION",
+        "metadata": "experiment_names = ['423','424', '425', '426', '427', '428', '429','430', '431']\n\nt_w_machine_time = [0.000000, 0.119563, 0.358689, 0.717377, 0.956503, 1.195628, 1.793443, 2.391257, 3.586885]\n\nAfter first calibration -- should be uniform Omega if good",
+        "subfolders": [
+            "000558431-RFSoCSequence.h5",
+            "000558425-RFSoCSequence.h5",
+            "000558430-RFSoCSequence.h5",
+            "000558424-RFSoCSequence.h5",
+            "000558427-RFSoCSequence.h5",
+            "000558428-RFSoCSequence.h5",
+            "000558423-RFSoCSequence.h5",
+            "000558426-RFSoCSequence.h5",
+            "000558429-RFSoCSequence.h5"
+        ]
+    },
+    "round 1 calibration and heating learning": {
+        "folder": "/Users/thomassteckmann/Duke_Analog_ZNE_data/data/ROUND_2_INITIAL",
+        "metadata": "the first round of heating data from the second set of data collection\n",
+        "subfolders": []
+    },
+    "initial heating data learnign and Omega compensation with fixed files this time": {
+        "folder": "/Users/thomassteckmann/Duke_Analog_ZNE_data/data/ROUND_2_INITIAL",
+        "metadata": "the first round of heating data from the second set of data collection\n",
+        "subfolders": [
+            "000563194-RFSoCSequence.h5",
+            "000563195-RFSoCSequence.h5",
+            "000563196-RFSoCSequence.h5",
+            "000563199-RFSoCSequence.h5",
+            "000563201-RFSoCSequence.h5",
+            "000563197-RFSoCSequence.h5",
+            "000563200-RFSoCSequence.h5",
+            "000563198-RFSoCSequence.h5",
+            "000563193-RFSoCSequence.h5"
+        ]
+    },
+    "600 shots": {
+        "folder": "/Users/thomassteckmann/Duke_Analog_ZNE_data/data/ROUND_2_VERIFICATION",
+        "metadata": "running verification with 600 shots for good Rabi data for a paper. Also, there's a kink I don't like and want to remeasure the data to avoid that. This will run before the XX extrapolation on qubits 12 and 13",
+        "subfolders": [
+            "000563213-RFSoCSequence.h5",
+            "000563208-RFSoCSequence.h5",
+            "000563212-RFSoCSequence.h5",
+            "000563216-RFSoCSequence.h5",
+            "000563209-RFSoCSequence.h5",
+            "000563211-RFSoCSequence.h5",
+            "000563215-RFSoCSequence.h5",
+            "000563210-RFSoCSequence.h5"
+        ]
+    },
+    "preGHZ initialization": {
+        "folder": "/Users/thomassteckmann/Duke_Analog_ZNE_data/data/ROUND_2_PRE_GHZ_INITIAL",
+        "metadata": "pre GHZ state calibration initialization. 150 shots, running after the two-qubit Jij flopping. ",
+        "subfolders": [
+            "000563243-RFSoCSequence.h5",
+            "000563239-RFSoCSequence.h5",
+            "000563238-RFSoCSequence.h5",
+            "000563242-RFSoCSequence.h5",
+            "000563237-RFSoCSequence.h5",
+            "000563241-RFSoCSequence.h5",
+            "000563245-RFSoCSequence.h5",
+            "000563240-RFSoCSequence.h5",
+            "000563244-RFSoCSequence.h5"
+        ]
+    },
+    "verification step for GHZ data": {
+        "folder": "/Users/thomassteckmann/Duke_Analog_ZNE_data/data/ROUND_2_PRE_GHZ_VERIFY",
+        "metadata": "checking ROUND 2 PRE GHZ Initial data for accuracy on qubits 11,12,13,14\n",
+        "subfolders": [
+            "000563253-RFSoCSequence.h5",
+            "000563256-RFSoCSequence.h5",
+            "000563249-RFSoCSequence.h5",
+            "000563252-RFSoCSequence.h5",
+            "000563246-RFSoCSequence.h5",
+            "000563255-RFSoCSequence.h5",
+            "000563251-RFSoCSequence.h5",
+            "000563254-RFSoCSequence.h5",
+            "000563250-RFSoCSequence.h5"
+        ]
+    }
+}

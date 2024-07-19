@@ -1,0 +1,1 @@
+pre GHZ state calibration initialization. 150 shots, running after the two-qubit Jij flopping. 

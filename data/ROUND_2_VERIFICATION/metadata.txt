@@ -1,0 +1,1 @@
+running verification with 600 shots for good Rabi data for a paper. Also, there's a kink I don't like and want to remeasure the data to avoid that. This will run before the XX extrapolation on qubits 12 and 13
