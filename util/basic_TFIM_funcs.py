@@ -7,7 +7,7 @@ from qutip.expect import expect
 from joblib import Parallel, delayed
 
 
-from samplers_util import thermal_rejection
+from util.samplers_util import thermal_rejection
 
 import numpy as np
 import scipy

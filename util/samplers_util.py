@@ -1,6 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from tqdm import tqdm
 from numba import jit, njit, prange
 from numba import float64, int32, boolean
 

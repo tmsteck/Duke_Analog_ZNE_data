@@ -1,9 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from tqdm import tqdm
 from numba import jit, njit, prange
 from numba import jit, float64, int32, boolean
-from samplers_util import thermal_rejection
+from util.samplers_util import thermal_rejection
 
 @njit()
 def gaussian_envelope_shifted(t, theta, Omega):

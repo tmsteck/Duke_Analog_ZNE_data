@@ -15,12 +15,11 @@ PATH = os.path.expanduser('~') + '/Duke_Analog_ZNE_data/'
 os.chdir(PATH)
 
 #print(os.getcwd())
-from index import print_index, get_experiment, index_folder
-from functions_util import cetina_thermal_exp, cetina_envelope_exp
+from util.index import print_index, get_experiment, index_folder
+from util.functions_util import cetina_thermal_exp, cetina_envelope_exp
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
-import matplotlib.cm as cm
 import numpy as np
 import h5py
 
@@ -29,20 +28,29 @@ import tkinter as tk
 from tkinter import filedialog
 
 
-from functions_util import gaussian_envelope_shifted, cetina_thermal, gaussian_envelope, generate_experimental_data, rabi_flop_gauss_fit, rabi_flop_gauss_fit_shifted, cetina_thermal_exp,cetina_envelope
-from fitting_functions_ZNE import log_fit_exp_ZNE, gaussian_ZNE, cubic_ZNE, linear_ZNE, Cetina_fit, exp_ZNE, third_no_first_ZNE, quadratic_only_ZNE
+from util.functions_util import gaussian_envelope_shifted, cetina_thermal, gaussian_envelope, generate_experimental_data, rabi_flop_gauss_fit, rabi_flop_gauss_fit_shifted, cetina_thermal_exp,cetina_envelope
+from util.fitting_functions_ZNE import log_fit_exp_ZNE, gaussian_ZNE, cubic_ZNE, linear_ZNE, Cetina_fit, exp_ZNE, third_no_first_ZNE, quadratic_only_ZNE
 
 
 COUNTS_THRESHOLD = 1
-PREFIX = '563'
-#PREFIX = '558
+ACTIVE_QUBITS = [0, 1, 2, 3]
+
+#Basic parameters:
+KHz = 1e3
+omega =  900*KHz
+us = 1e-6
+theta = 0.05
 
 
 
-def fit(function, x_axis, y_axis, return_cov=False, p0=[.05,2000000], weights=None):
+def fit(function, x_axis, y_axis, return_cov=False, p0=[theta,omega], weights=None):
     # Fit the data to the function
-    popt, pcov = curve_fit(function, x_axis, y_axis, p0=p0, sigma=weights, absolute_sigma=True, maxfev=10000)
-    
+    try:
+        popt, pcov = curve_fit(function, x_axis, y_axis, p0=p0, sigma=weights, absolute_sigma=True, maxfev=10000)
+    except:
+        'Fit Failed, returning default'
+        popt = p0
+        pcov = None
     if return_cov:
         return popt, pcov
     return popt
@@ -62,12 +70,12 @@ print(f"Selected folder: {foldername}")
 
 
 # Indexes the folder to add to the experiment list
-index_tf = input('Do you want to index the folder? (y/n): ')
-if index_tf == 'y':
-    name = input('Enter extra metadata')
-    index_folder(full_path, title=name)
-else:
-    pass    
+#index_tf = input('Do you want to index the folder? (y/n): ')
+#if index_tf == 'y':
+#    name = input('Enter extra metadata')
+#    index_folder(full_path, title=name)
+#else:
+#    pass    
 
 
 foldername = 'data/' + foldername
@@ -122,15 +130,7 @@ if len(t_w_machine_time) == 0:
             
 
 experiment_names = [str(name) for name in experiment_names]
-for name_index in range(len(experiment_names)):
-    name = experiment_names[name_index]
-    if PREFIX in experiment_names:
-        pass
-    else:
-        name = PREFIX + name
-        experiment_names[name_index] = name
-#print(experiment_names)
-#print(t_w_machine_time)
+
 os.chdir(foldername)
 
 
@@ -183,22 +183,20 @@ t_w.sort()
 
 
 #For each key, extract Omega and theta from the data by fitting to cetina_thermal_exp and cetina_envelope_exp
-center_qubit = [0, 1, 2, 3]#[-3, -2, -1,  
 
 qubits = data_dict[t_w[0]]['probs'].shape[0]
-print(qubits)
+print('Qubits used:')
+print('Total Qubits: ',qubits)
 #Get the center qubit index:
 shift = 0
 center_qubit_index = int(qubits/2)+shift
-good_qubits = np.array(center_qubit) + center_qubit_index
-print(center_qubit_index)
-print([i+-12 for i in range(qubits)])
-print(good_qubits)
-print(center_qubit)
-KHz = 1e3
-omega =  900*KHz
-us = 1e-6
-theta = 0.05
+good_qubits = np.array(ACTIVE_QUBITS) + center_qubit_index
+
+print('Center Qubit Index (Zero Indexed): ',center_qubit_index)
+print([i-(center_qubit_index) for i in range(qubits)])
+print('Active Qubits, Zero Index: ',good_qubits)
+print('Active Qubits, center Index: ',ACTIVE_QUBITS)
+
 thetas = np.zeros((len(t_w), len(good_qubits)))
 Omegas = np.zeros((len(t_w), len(good_qubits)))
 #For each element of t_w, and each good qubit, curve fit to the data to get Omega and theta
@@ -208,9 +206,17 @@ for i, t in enumerate(t_w):
     probs = data['probs']
     for j, q in enumerate(good_qubits):
         #print(j, q)
-        popt, pcov = curve_fit(cetina_thermal_exp, x, probs[q, :], p0=[theta, omega])
+        try:
+            popt, pcov = curve_fit(cetina_thermal_exp, x, probs[q, :], p0=[theta, omega], maxfev=10000)
+        except:
+            print('Fit Failed, returning previous value. For Qubit {}. t_w: {}'.format(q, t))
+            popt = [theta, omega]
         theta = popt[0]
-        popt, pcov = curve_fit(cetina_envelope_exp, x, probs[q, :], p0=[theta, omega])
+        try:
+            popt, pcov = curve_fit(cetina_envelope_exp, x, probs[q, :], p0=[theta, omega], maxfev=10000)
+        except:
+            print('Fit Failed, returning previous value. For Qubit {}. t_w: {}'.format(q, t))
+            popt = [theta, omega]
         omega = popt[1]
         thetas[i, j] = theta
         Omegas[i, j] = omega
@@ -417,7 +423,7 @@ with open('Updated_parameters.txt', 'w') as f:
 plt.figure()
 
 plt.imshow(Omega_scale_factor, cmap=cmap)
-plt.xlabel('Qubit, indexed from first used qubit {}'.format(center_qubit[0]+ shift))
+plt.xlabel('Qubit, indexed from first used qubit {}'.format(ACTIVE_QUBITS[0]+ shift))
 plt.ylabel('t_w index')
 plt.title('Omega Scaling Factor Update')
 cbar = plt.colorbar()
@@ -431,7 +437,7 @@ plt.close()
 plt.figure()
 
 plt.imshow(Omega_comp_fit_matrix, cmap=cmap)
-plt.xlabel('Qubit, indexed from first used qubit {}'.format(center_qubit[0]+ shift))
+plt.xlabel('Qubit, indexed from first used qubit {}'.format(ACTIVE_QUBITS[0]+ shift))
 plt.ylabel('t_w index')
 plt.title('Omega Scaling Factor Linear Fit')
 cbar = plt.colorbar()
@@ -445,7 +451,7 @@ plt.close()
 plt.figure()
 
 plt.imshow(Omega_comp_fit_matrix/Omega_scale_factor, cmap=cmap)
-plt.xlabel('Qubit, indexed from first used qubit {}'.format(center_qubit[0]+ shift))
+plt.xlabel('Qubit, indexed from first used qubit {}'.format(ACTIVE_QUBITS[0]+ shift))
 plt.ylabel('t_w index')
 plt.title('Omega_fit/Omega_scale_raw error')
 cbar = plt.colorbar()
@@ -458,7 +464,7 @@ plt.close()
 plt.figure()
 
 plt.imshow(Omegas, cmap=cmap)
-plt.xlabel('Qubit, indexed from first used qubit {}'.format(center_qubit[0]+ shift))
+plt.xlabel('Qubit, indexed from first used qubit {}'.format(ACTIVE_QUBITS[0]+ shift))
 plt.ylabel('t_w index')
 plt.title('Omega experimental')
 cbar = plt.colorbar()
@@ -470,7 +476,7 @@ plt.close()
 plt.figure()
 
 plt.imshow(Omegas*Omega_old_comp, cmap=cmap)
-plt.xlabel('Qubit, indexed from first used qubit {}'.format(center_qubit[0]+ shift))
+plt.xlabel('Qubit, indexed from first used qubit {}'.format(ACTIVE_QUBITS[0]+ shift))
 plt.ylabel('t_w index')
 plt.title('Omega experimental')
 cbar = plt.colorbar()
@@ -482,7 +488,7 @@ cbar.set_label('Omega experimental')
 plt.figure()
 
 plt.imshow(thetas_mat, cmap=cmap)
-plt.xlabel('Qubit, indexed from first used qubit {}'.format(center_qubit[0]+ shift))
+plt.xlabel('Qubit, indexed from first used qubit {}'.format(ACTIVE_QUBITS[0]+ shift))
 plt.ylabel('t_w index')
 plt.title('theta experimental')
 cbar = plt.colorbar()
