@@ -6,6 +6,8 @@ import sys
 
 sys.path.insert(0, './scripts')
 sys.path.insert(1, './')
+sys.path.insert(0, './util')
+
 #print(sys.path)
 #print(os.getcwd())
 #Move the directory back to Duke_Data
