@@ -1,0 +1,6 @@
+foldername = 'XX_Bell_population'
+bases = ['pi/2']
+qubits = [12,13]
+basis_names = [386]#[368, 369, 370, 371] 
+shots = 2000
+time_steps = 1

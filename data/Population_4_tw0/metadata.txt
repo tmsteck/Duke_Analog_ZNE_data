@@ -1,0 +1,1 @@
+Population data measured in all bases. With B=9, reduced J ~1/2 relative to other experiments. Initial calibration data, with Jt=2.6

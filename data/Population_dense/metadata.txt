@@ -1,0 +1,1 @@
+Trying to check if aliasing caused the bad errors in the 4 qubit GHZ state data. Dense data, in two sets
