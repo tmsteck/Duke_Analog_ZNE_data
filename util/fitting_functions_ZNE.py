@@ -69,7 +69,7 @@ def gaussian_ZNE(x, y, weights=None):
     try:
         popt, pcov = curve_fit(gaussian_func, x, y, maxfev=10000, p0 = [y[0], 0.1, 0,0])
     except:
-        popt = [0,1,0]
+        popt = [0,1,0,0]
     gaussian_fitted = lambda x: popt[0]*np.exp((-x**2 + popt[2]*x)/(2*popt[1]**2)) + popt[3]
     return gaussian_fitted
     

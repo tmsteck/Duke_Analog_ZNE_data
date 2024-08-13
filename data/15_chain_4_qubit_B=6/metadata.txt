@@ -1,0 +1,8 @@
+4 qubit, 15 ion chain, B=6, Parity and Population:
+
+Peak at 2.06ms
+562, 563, 564, 567, 568, 569, 570
+0,1,2,3,4,5,6
+
+Expected peak around 0.53*pi. Not actually seeing a peak thereabouts. 
+For 

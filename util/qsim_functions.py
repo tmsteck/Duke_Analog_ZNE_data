@@ -7,7 +7,7 @@ import scipy as sp
 import os
 
 
-from h5analysis import *
+from util.h5analysis import *
 
 
 def fit_gaussian_new(x,y, p0 = None, maxfev = 5000):
