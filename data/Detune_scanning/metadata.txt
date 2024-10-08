@@ -1,0 +1,7 @@
+Goal:
+We need to identify the good frequencies with less decay. 
+Display the decay vs. detuning frequency, and the leakage vs. detuning
+Long times:
+955, 956, 957, 962, 963, 964, 965
+Detuning:
+-45, -50, -55, -60, -65, -70, -75

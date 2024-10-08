@@ -5,3 +5,19 @@ Y - 559
 B = 6
 X - 561
 Y - 560
+
+# foldername = '15_ion_4_qubit_time_scan'
+# #bases = ['x0', 'y0','x1','y1']
+# # 4 qubit, 15 ions
+# #B = 4, B = 6
+# bases = ['x0', 'y0', 'x1', 'y1']
+# qubits = [2,3,4,5]#,6,7]
+# basis_names = [558, 559, 561, 560] 
+# shots = 600
+# data_prefix = '000572'
+# J = 0.53*np.pi
+# B = 4*J
+# theta_0_noise = 0.055
+# xrate = np.sqrt(0.015)*J
+# #zrate = np.sqrt(0.15)*J
+# zrate = 0

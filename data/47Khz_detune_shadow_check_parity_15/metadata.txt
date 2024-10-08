@@ -1,0 +1,18 @@
+August 19th
+BZ = 4, parity oscillations for 15 qubit chain, 4 qubits at a time. 
+Crosscheck with Jij data for 45 and 49 detuning -- should agree with the dephasing rate and maybe fidelity?
+Should also cross check the measurement angles
+
+Time evolution = 1.6735
+
+084, 085, 086, 087, 088, 089, 090
+0, 1, 2, 3, 4, 5, 6 * pi/6
+
+Expected angle: 1.894444078461241
+
+Fidelity = 0.5906039815196835
+Population angle: 2.199114857512855
+Amplitude angle: 4.084070449666731
+Difference : -1.8849555921538759
+
+

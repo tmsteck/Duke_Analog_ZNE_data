@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from numba import jit, njit, prange
 from numba import jit, float64, int32, boolean
 from util.samplers_util import thermal_rejection
+from scipy.optimize import curve_fit
 
 @njit()
 def gaussian_envelope_shifted(t, theta, Omega):
@@ -129,3 +130,29 @@ def rabi_flop_gauss_fit_shifted(t, theta, Omega):
 @njit((float64[:], float64, float64))
 def rabi_flop_gauss_fit(t, theta, Omega):
     return (1 - np.exp(-1*np.power(Omega*t*theta,2)/2)*np.cos(Omega*t))/2
+
+def calibrate_sim_Omegas(theta_list, Omega_target, times, debug=False):
+    #Step 1: Generate the basic sim data:
+    sim_data = np.zeros((len(theta_list), len(times)))
+    for i, theta in enumerate(theta_list):
+        sim_data[i, :] = cetina_thermal_exp(times, theta, Omega_target)
+    #Step 2: Fit the data to the basic Cetina Envelope function
+    Omega_round_1 = np.zeros(len(theta_list))
+    for i in range(len(theta_list)):
+        popt, pcov = curve_fit(cetina_envelope_exp, times, sim_data[i, :], p0=[0.05, Omega_target])
+        #if debug:
+        #plt.plot(times, sim_data[i, :])
+        #plt.plot(times, cetina_envelope_exp(times, *popt))
+        #print(theta_list[i], popt[0])
+        Omega_round_1[i] = popt[1]
+    
+    #plt.plot(theta_list, Omega_round_1, 'o')
+    
+    #Step 3: Get the Scale Factors:
+    if debug:
+    #print(Omega_round_1)
+    #print(Omega_target)
+        plt.plot(theta_list, Omega_round_1, 'o')
+        plt.show()
+    scale_factors = Omega_target/Omega_round_1
+    return scale_factors

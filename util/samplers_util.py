@@ -106,3 +106,8 @@ def returnGaussianSamples(n_samples:int, mean:float, var_min: float, var_max:flo
     for i in range(n_samples):
         output[i] = f(times, 1-np.random.normal(means, variances))
     return output
+
+
+
+        
+    

@@ -1,0 +1,5 @@
+Should be very bad -- -43 detuning, parked at -41kHz for the sideband detuning, so Expected
+to show very poor results. 
+
+178, 179, 180, 181, 182, 183, 184
+0, 1, 2,3,4,5,6

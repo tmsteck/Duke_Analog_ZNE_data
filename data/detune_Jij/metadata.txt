@@ -1,0 +1,9 @@
+Scanning -41 to -49 Jij for a single Ion pair. 
+Expectation:
+47 is better -- (45, 49)
+45 is worse (43, 47). So, we expect 43 to be worse
+
+Associatedw with the -45 and -47 detuning parameters
+
+053, 051, 055, 052, 054
+-49, -47, -45, -43, -41

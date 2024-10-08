@@ -35,6 +35,7 @@ from util.fitting_functions_ZNE import log_fit_exp_ZNE, gaussian_ZNE, cubic_ZNE,
 
 
 COUNTS_THRESHOLD = 1
+#ACTIVE_QUBITS = [0, 1, 2, 3]
 ACTIVE_QUBITS = [0, 1, 2, 3]
 
 #Basic parameters:
@@ -175,9 +176,20 @@ for file_name in h5_files:
     #print((raw_counts.shape))
     thresholded_counts = raw_counts > COUNTS_THRESHOLD
     probs = np.mean(thresholded_counts, axis=1)
-    data = {'x': x_array, 'probs': probs}
+    std = np.std(thresholded_counts, axis=1, ddof=1)/np.sqrt(thresholded_counts.shape[1])
+    data = {'x': x_array, 'probs': probs, 'std': std}
     data_dict[t_w_current] = data
-    
+print(counts.shape)
+#Convert to a matrix:
+t_w_sorted = np.array(t_w)
+t_w_sorted.sort()
+#print(t_w_sorted)
+data_matrix = np.zeros(((len(t_w),) +  data_dict[t_w[0]]['probs'].shape))
+std_matrix = np.zeros(((len(t_w),) +  data_dict[t_w[0]]['probs'].shape))
+for i in range(len(t_w)):
+    data_matrix[i] = data_dict[t_w_sorted[i]]['probs']
+    std_matrix[i] = data_dict[t_w_sorted[i]]['std']
+
 #sort t_w in ascending order
 t_w.sort()
 #print(t_w)
@@ -270,12 +282,15 @@ cmap = LinearSegmentedColormap.from_list("mycmap", ["blue", "red"])
 
 #Extracts the heating rate for each qubit
 plt.figure()
+colors = cmap(np.linspace(0, 1, len(good_qubits)))
+
 for i in range(len(good_qubits)):
-    plt.plot(t_w, thetas_mat[:, i], label='Qubit {}'.format(good_qubits[i]))
-plt.xlabel('Delay (ms)')
-plt.ylabel('Theta')
+    color = colors[i]
+    plt.scatter(t_w, thetas_mat[:, i], label='Qubit {}'.format(good_qubits[i]), color=color)
+plt.xlabel(r'Delay, $t_w$ (ms)')
+plt.ylabel(r'Temperature, $\theta$ $(\theta \propto \bar{n})$')
 plt.legend()
-plt.title('Theta vs. Delay')
+plt.title('Temperature vs. Wait Time')
 #Extract the average of the thetas slope. Fit each qubit to a line and extract the slope, then average
 thetas_slopes = np.zeros(len(good_qubits))
 intercepts = np.zeros(len(good_qubits))
@@ -288,13 +303,14 @@ thetas_slope = np.mean(thetas_slopes)
 intercept = np.mean(intercepts)
 plt.plot(t_w, thetas_slope*np.array(t_w) + intercept, label='Average Theta Slope', linestyle='--', lw=3)
 #Add text with the average theta slope and intercept:
-plt.text(0.3, 0.02, r'Fit for Center Ions: {:.4f}$t_w$ + {:.4f}'.format(thetas_slope, intercept), transform=plt.gca().transAxes)
+plt.text(0.3, 0.02, r'Linear Fit of Heating Rate: {:.4f}$t_w$ + {:.4f}'.format(thetas_slope, intercept), transform=plt.gca().transAxes)
 #save the plot:
 #print(os.getcwd())
 plt.savefig('Theta_vs_Delay.png', dpi=600)
 #plt.show()
 plt.close()
 #print()
+
 
 
 
@@ -338,6 +354,7 @@ export_info += build_string + '\n'
 
 #print(print('[' + ", ".join(map(str, updated_t_w/1e3 /converter)) + ']'))
 #export_info +='[' + ", ".join(map(str, updated_t_w/1e3 /converter)) + ']\n'
+
 
 
 
@@ -666,3 +683,6 @@ def save_plot(qubit_index):
 
 for qubit_index in range(len(good_qubits)):
     save_plot(qubit_index)
+    
+#Export the data to a .npz file. 
+np.savez('data_dump', times = t_w_data['x']*us, thetas = thetas, qubits = good_qubits, Omegas = Omegas, data=data_matrix, std_matrix = std_matrix)
