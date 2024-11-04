@@ -131,7 +131,7 @@ def rabi_flop_gauss_fit_shifted(t, theta, Omega):
 def rabi_flop_gauss_fit(t, theta, Omega):
     return (1 - np.exp(-1*np.power(Omega*t*theta,2)/2)*np.cos(Omega*t))/2
 
-def calibrate_sim_Omegas(theta_list, Omega_target, times, debug=False):
+def calibrate_sim_Omegas(theta_list, Omega_target, times, debug=False, return_scale_factors=True):
     #Step 1: Generate the basic sim data:
     sim_data = np.zeros((len(theta_list), len(times)))
     for i, theta in enumerate(theta_list):
@@ -155,4 +155,8 @@ def calibrate_sim_Omegas(theta_list, Omega_target, times, debug=False):
         plt.plot(theta_list, Omega_round_1, 'o')
         plt.show()
     scale_factors = Omega_target/Omega_round_1
-    return scale_factors
+    if return_scale_factors:
+        return scale_factors
+    else:
+        return Omega_round_1
+
