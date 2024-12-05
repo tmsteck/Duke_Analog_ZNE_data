@@ -231,53 +231,94 @@ def converge_ZNE_order(x, y, remove_first=True, debug=False, weights=None):
         #    return i
 
 
-def converge_ZNE_loocv(x, y, remove_first=True, debug=False, weights=None, return_cov=False,  even_only=False, return_order=False):
+def converge_ZNE_loocv(x, y, y_error = None, remove_first=True, debug=False, return_cov=False,  even_only=False, return_order=False):
+    
     """From: https://medium.com/@snp.kriss/a-simple-method-for-determining-an-order-of-polynomial-fits-to-avoid-overfitting-f4e9dfa07e1e"""
     #Iterates what the ZNE expectation is for a given order of polynomial. Returns the order fit where the data diverges
     """Computes the fit leaving out a single data point, and then checks the rss of the fit. If the rss is greater than the previous fit, then the order is returned"""
-    def loocv(x, y, fit, pred):
+    if y_error is None:
+        y_error = np.ones_like(y)
+    def loocv(x, y, y_err, fit, pred):
         """Leave one out cross validation(LOOCV) 
         RSS for fitting a polynomial model """
         n = len(x)
         idx = np.arange(n)
-        rss = np.sum([(y - pred(fit(x[idx!=i], y[idx!=i]), x))**2.0 for i in range(n)])
-        penalty = 0#order * min(np.abs(y))
-        return rss + penalty
+        rss = 0
+        for i in range(n):
+            # Create training data excluding point i
+            x_train = x[idx != i]
+            y_train = y[idx != i]
+            
+            # Fit model to training data
+            model = fit(x_train, y_train, None)
+            #plt.close()
+            #plt.scatter(x, y)
+            #plt.plot(x_train, model(x_train))
+            #plt.show()
+            # Make prediction and calculate squared error
+            prediction = pred(model, x)
+            squared_error = (y - prediction)**2.0
+            
+            # Add to running sum
+            rss += np.sum(squared_error)
+        #print(rss)
+        return rss
+    
+    def jackknife(x, y, y_err, fit, pred, estimate):
+        n = len(x)
+        idx = np.arange(n)
+        rss = np.sum([(estimate - pred(fit(x[idx!=i], y[idx!=i], y_err[idx!=i]), 0))**2.0 for i in range(n)])
+        return rss
     
     def evalute(function,x):
         return function(x)
     
     
     residuals = [np.nan]
-    for order in range(1, len(y)):
+    for order in range(1, len(y)-1):
         try:
-            function = lambda x, y: order_poly_ZNE(x, y, order=order, remove_first=remove_first, weights=weights, debug=False, even_only=True)  
-            rss = loocv(x, y, function, evalute)
+            function = lambda x, y, y_error: order_poly_ZNE(x, y, order=order, remove_first=remove_first, weights=y_error, debug=False)  
+            rss = loocv(x, y, y_error, function, evalute)
+            
             residuals.append(rss)
         except Exception as e:
-            #print(e)
+            print(e)
             #print('Fitting failed for order = ', order)
             residuals.append(np.nan)
+    
     if debug:
         plt.scatter(range(len(residuals)), residuals)
         plt.show()
     #get the index of the minimum residual
     try:
+        print(residuals)
         min_residual = np.nanargmin(residuals)
+        print(np.nanargmin(residuals))
     except:
         print('Loocv failed')
         #print(residuals)
         min_residual = 3
     if return_cov:
-        function, cov = order_poly_ZNE(x, y, order=min_residual, remove_first=remove_first, weights=weights, debug=debug, return_cov=return_cov)
-        J = np.array([0**i for i in range(min_residual)])
+        jackknife_function = lambda x, y, y_error: order_poly_ZNE(x, y, order=min_residual, remove_first=remove_first, weights=y_error, debug=False, return_cov=False)
+        function, cov = order_poly_ZNE(x, y, order=min_residual, remove_first=remove_first, weights=y_error, debug=debug, return_cov=return_cov)
+        
+        J = np.array([0**i for i in range(min_residual+1 - remove_first)])
+        #print(J)
+        #print(cov)
         sigma_0 = np.sqrt(J @ cov @ J.T)
+        print(J)
+        print(cov)
+        estimate = function(0)
+        jackknife_residual = jackknife(x, y, y_error, jackknife_function, evalute, estimate)
+        error = np.sqrt(jackknife_residual + sigma_0**2)
+        print(jackknife_residual)
+        print(sigma_0)
         if return_order:
-            return function, sigma_0, min_residual
+            return function, error, min_residual
         else:
-            return function, sigma_0
+            return function, error
     else:
-        function = order_poly_ZNE(x, y, order=min_residual, remove_first=remove_first, weights=weights, debug=debug)
+        function = order_poly_ZNE(x, y, order=min_residual, remove_first=remove_first, weights=y_error, debug=debug)
         if return_order:
             return function, min_residual
         else:
@@ -323,13 +364,137 @@ def pade_fit_ZNE(x, y, tail=0, debug=False):
     params, params_cov = curve_fit(pade_function, x, y, p0 = [1 for _ in range(m+l+2)])
     return pade_function(0 ,*params) + tail
         
+    import numpy as np
+from scipy import interpolate
 
-        
+def pade_v2(p, x0, xf, m=1):
+    """
+    Convert a numpy Polynomial to a Padé approximant that decays as 1/x.
+    
+    Ensures the pade approximant agrees with the polynomial in the interval [x0, xf]
+    This can be done by treating x0 as the point to exand the series around
+    
+    Parameters:
+    - p: numpy Polynomial object, the polynomial to convert.
+    - x0: float, start of the interval.
+    - xf: float, end of the interval.
+    - m: int, degree of the denominator polynomial (default is 1).
+    
+    Returns:
+    - pade_approx: function, the Padé approximant as a callable function.
+    """
+    # Sample points from the interval for fitting
+    x_sample = np.linspace(x0, xf, len(p.coef))
+    y_sample = p(x_sample)
+    
+    # Fit a Padé-like rational function using least squares with scipy's interp1d
+    # We want a function of the form N(x) / D(x) where D(x) ~ x at infinity
+    
+    # Create matrix for linear system (least squares for rational approximation)
+    A = np.vander(x_sample, len(p.coef))  # Vandermonde matrix for numerator (N(x))
+    B = np.vander(x_sample, m + 1)        # Vandermonde matrix for denominator (D(x))
+    
+    # Solve for coefficients of N(x) and D(x) that best fit the sampled points
+    # We use least squares approach to solve for N(x) coefficients while forcing
+    # D(x) to decay with x for large values
+    
+    # Formulate augmented matrix to enforce 1/x decay in D(x)
+    B[:, -1] = x_sample  # Ensures decay like 1/x at large x
+    
+    # Concatenate A and B to solve for the rational approximation
+    AB = np.hstack((A, -y_sample[:, None] * B))
+    coeffs, *_ = np.linalg.lstsq(AB, y_sample, rcond=None)
+    print(coeffs)
+    # Extract numerator and denominator coefficients
+    n_coeffs = coeffs[:len(p.coef)]
+    d_coeffs = np.zeros(m + 1)
+    d_coeffs[1:] = coeffs[len(p.coef):]
+    d_coeffs[-1] = 1  # Force highest degree term in denominator to ensure 1/x behavior
+    
+    def pade_approx(x):
+        num = np.polyval(n_coeffs, x)
+        denom = np.polyval(d_coeffs, x)
+        return num / denom
+    
+    return pade_approx
+
 #for l in range(1, maximum_total_order//2):
-        
 
+
+def shift_polynomial(p, a):
+    """
+    Shift the polynomial p(x) by a value 'a' along the x-axis.
+    This computes a new polynomial q(x) such that q(x) = p(x + a).
+    
+    Parameters:
+    - p: Polynomial (numpy.polynomial.Polynomial), the original polynomial.
+    - a: float, the amount to shift the polynomial by along the x-axis.
+    
+    Returns:
+    - q: Polynomial, the shifted polynomial.
+    """
+    # Get the coefficients of the original polynomial
+    coeffs = p.coef
+    
+    # Initialize the new coefficients array (will be the same length as original)
+    shifted_coeffs = np.zeros_like(coeffs)
+    
+    # Compute the new coefficients for the shifted polynomial
+    for i in range(len(coeffs)):
+        # Binomial expansion for (x + a)^i
+        for j in range(i + 1):
+            shifted_coeffs[j] += coeffs[i] * (np.math.comb(i, j) * (a ** (i - j)))
+    
+    # Create and return the shifted polynomial
+    return Polynomial(shifted_coeffs)
+
+def pade_v3(poly, x0, xf, asymptote=0):
+    """Converts the polynomial over the range x0, xf to a pade approximant that agrees with the polynomial 
+    Does this by shifting the input to the polynomial before converting to a pade approximant
+    Uses the Pade approimant with 1/x decay behavior (degree denominator = degree numerator + 1)
+    Args:
+        poly (Polynomial): Best fit Polynomial
+        x0 (float): lower bound on known region
+        xf (float): uppoer bound on known region
+    """
+    x0 = 0
+    shifted = shift_polynomial(poly, x0)
+    degree = shifted.degree()
+    #return the largest integers p and q such that p + q < degree and p + 1 = q
+    p = degree//2
+    q = degree - p
+    #cast to pade:
+    pade_approx = pade(shifted.coef[::-1], p, q)
+    #Convert back to a polynomial I can execute:
+    P = Polynomial(pade_approx[0])
+    Q = Polynomial(pade_approx[1])
+    #Shift the numerator and denominator separately
+    return lambda x: P(x - x0)/Q(x - x0)
+    
+    #Convert the polynomial to one that 
+    
+# def jackknife_loocv(x, y, y_errors, remove_first=True, debug=False, even_only=False):
+#     """ Performs Jack-Knife variance estimation by computing the variance by calling converge_ZNE_loocv on a subset of the data"""
+#     assert not even_only, "Only even not supported yet. Just square the input"
+#     repeats = len(x)
+#     values, cov = np.zeros(repeats), np.zeros(repeats)
+#     #residuals = np.zeros(repeats)
+#     for i in range(repeats):
+#         x_new = np.delete(x, i)
+#         y_new = np.delete(y, i)
+#         y_errors_new = np.delete(y_errors, i)
+#         function, cov[i] = converge_ZNE_loocv(x_new, y_new, y_error = y_errors_new, remove_first=remove_first, debug=False, return_cov=True)
+#         values[i] = function(0)
+#     #Average the covariances:
+#     cov = np.mean(cov, axis=0)
+#     #get the std of the jackknife values
+#     std = np.std(values)
+#     #Get the outout of the full function:
+#     function,cov_full = converge_ZNE_loocv(x, y, y_error = y_errors, remove_first=remove_first, debug=False, return_cov=True)
+#     #Combine the errors:
     
     
+
     
 # max_order = min(len(y)-1, 20)
 # values = [y[0]]
