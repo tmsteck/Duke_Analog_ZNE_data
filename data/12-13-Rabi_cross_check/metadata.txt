@@ -1,0 +1,2 @@
+Checking data from 12-13 to get heating rates for 12-13-Jij_Check. Long ramp time, pretty good (nice slope) leakage, but strange behavior at late times
+

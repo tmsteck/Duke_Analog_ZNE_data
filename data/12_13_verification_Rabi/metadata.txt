@@ -1,0 +1,5 @@
+A selection of the optimal points for the Jij -- Rabi measured before Jij during calibration. 
+
+These data should all align in frequency, and we want to extract the temperatures from them via direct measurement
+
+We specifically care about qubit 15 and 16 I think -- double check this though

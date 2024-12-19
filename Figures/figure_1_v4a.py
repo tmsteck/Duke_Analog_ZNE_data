@@ -215,6 +215,7 @@ ax_a.plot(times_dense_plotting, P_avg_thermal_dense, c='k', label='Averaged Expe
 
 
 ZNE_points = np.sqrt(np.array([0, 1, 1.1, 1.3, 1.6, 2 ,2.5]))#,2.5, 3, 3.5])
+#ZNE_points = np.array([0,1.0, 1.0810140527710055, 1.3174929343376374, 1.6902785321094298])#, 2.1691699739962274, 2.71537032345343])
 #ZNE_points = np.array([0, 1, 1.1, 1.3, 1.6, 2 ])
 def create_linear_function(y_at_0_5):
     # Given points
@@ -478,9 +479,9 @@ ax_a.legend(loc='lower right',ncol=2)
 #plt.show()
 
 #print(fig_a)
-fig_a.savefig('Figure_1_v4a.png', dpi=600)
-fig_a.savefig('Figure_1_v4a.svg', dpi=600)
-fig_a.savefig('Figure_1_v4a.pdf', dpi=600)
+fig_a.savefig('Figure_1_v4_test.png', dpi=600)
+#fig_a.savefig('Figure_1_v4_test.svg', dpi=600)
+#fig_a.savefig('Figure_1_v4_test.pdf', dpi=600)
 
 #fig2.savefig('Figure_1_v4b.png', dpi=600)
 #fig2.savefig('Figure_1_v4b.svg', dpi=600)

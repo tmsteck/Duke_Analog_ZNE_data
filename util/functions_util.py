@@ -146,7 +146,6 @@ def calibrate_sim_Omegas(theta_list, Omega_target, times, debug=False, return_sc
         #print(theta_list[i], popt[0])
         Omega_round_1[i] = popt[1]
     
-    #plt.plot(theta_list, Omega_round_1, 'o')
     
     #Step 3: Get the Scale Factors:
     if debug:
@@ -155,6 +154,36 @@ def calibrate_sim_Omegas(theta_list, Omega_target, times, debug=False, return_sc
         plt.plot(theta_list, Omega_round_1, 'o')
         plt.show()
     scale_factors = Omega_target/Omega_round_1
+    if return_scale_factors:
+        return scale_factors
+    else:
+        return Omega_round_1
+
+def zero_temperature_Omega(theta, Omega, times, debug=False, return_scale_factors=True):
+    #Step 1: Generate the basic sim data:
+    theta_list = np.linspace(0, theta, 20, endpoint=True)
+    
+    sim_data = np.zeros((len(theta_list), len(times)))
+    for i, theta in enumerate(theta_list):
+        sim_data[i, :] = cetina_thermal_exp(times, theta, Omega)
+        
+    #Step 2: Fit the data to the basic Cetina Envelope function
+    Omega_round_1 = np.zeros(len(theta_list))
+    for i in range(len(theta_list)):
+        popt, pcov = curve_fit(cetina_envelope_exp, times, sim_data[i, :], p0=[0.05, Omega])
+        Omega_round_1[i] = popt[1]
+        
+    #Correction at theta:
+    correction = Omega_round_1[-1]/Omega
+    #We now have theta vs. Omega -- get Omega at zero:
+    return Omega_round_1[0]/correction
+    
+    #Step 3: Get the Scale Factors:
+    if debug:
+        plt.plot(theta_list, Omega_round_1, 'o')
+        plt.show()
+        
+    scale_factors = Omega/Omega_round_1
     if return_scale_factors:
         return scale_factors
     else:

@@ -35,8 +35,9 @@ from util.fitting_functions_ZNE import log_fit_exp_ZNE, gaussian_ZNE, cubic_ZNE,
 
 
 COUNTS_THRESHOLD = 1
-#ACTIVE_QUBITS = [0, 1, 2, 3]
-ACTIVE_QUBITS = [0, 1, 2, 3]
+#ACTIVE_QUBITS = [0,1,2, 3, 4, 5,6]
+#ACTIVE_QUBITS = [-6, -5, -4, -3, -2, -1, 0, 1, 2, 3,4,5,6]
+ACTIVE_QUBITS = [5,6]
 
 #Basic parameters:
 KHz = 1e3
@@ -315,7 +316,7 @@ plt.close()
 
 
 #Compute Updated t_w times:
-target_thetas = [1, 1.1, 1.3, 1.6, 1.8, 2, 2.5, 3, 4]
+target_thetas = [1, 1.1, 1.3, 1.6, 1.8, 2, 2.5]#, 3]#, 4]
 #Using theta_slop and intercept, compute the updated wait times so that target_thetas*thetas_intercept = tw*thetas_slope + thetas_intercept
 updated_t_w = (np.array(target_thetas)*intercept - intercept)/thetas_slope
 updated_thetas = thetas_slope*updated_t_w + intercept
@@ -427,8 +428,8 @@ for i in range(len(t_w)):
     #replace each '  ' with ' '
     #print('[' + ", ".join(map(str, Omega_comp_fit_matrix[i])) + ']')
     print(Omega_comp_fit_matrix[i,0])
-    export_info +='t_w:{:.6f} ms \n'.format(updated_t_w[i])
-    export_info +='t_w:{:.6f} machine time \n'.format(updated_t_w[i]*1e-3*409.6)
+    #export_info +='t_w: {:.6f} ms \n'.format(updated_t_w[i])
+    export_info +='\nt_w (MU): {:.6f} \n'.format(updated_t_w[i]*1e-3*409.6)
     export_info += str(Omega_comp_fit_matrix[i,0]) + '\n'
     #export_info +='[' + ", ".join(map(str, Omega_comp_fit_matrix[i])) + ']\n'
 #Save export_info to a .txt file called 'Udpated parameters:'
