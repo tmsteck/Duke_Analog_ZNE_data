@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from numba import jit, njit, prange
 from numba import jit, float64, int32, boolean
 from util.samplers_util import thermal_rejection
-from scipy.optimize import curve_fit
+from scipy.optimize import curve_fit, minimize
 
 @njit()
 def gaussian_envelope_shifted(t, theta, Omega):
@@ -189,3 +189,56 @@ def zero_temperature_Omega(theta, Omega, times, debug=False, return_scale_factor
     else:
         return Omega_round_1
 
+def calibrate_Js(J_target, thetas, times, debug=False):
+    """Returns a calibrated list of Js matching the input of thetas such that the fit of the frequency over the time scale is equal to J
+
+    Args:
+        J (float): Target value of J
+        thetas (array: float): values of theta to calibrate over
+        times (array: float): times to optimize over
+        debug(bool): whether to plot the results
+    """
+    #This is the function that we want to fit to fake data -- It extracts a fixed Omega value
+    def fit_function(t, theta, Omega):
+        """The full Cetina function for the single COM mode
+        shots
+        
+        Args:
+        t: float, time
+        theta: float, the shift of the gaussian envelope
+        Omega: float, the frequency of the gaussian envelope
+        
+        Returns:
+        float: the value of the function at time t
+        """
+        #It's just an envelope of the expected form and a constant Cos function
+        C = 1/np.sqrt((1 + (Omega*theta*t)**2))
+        return  C * np.cos(2*Omega*t)
+    
+    #This generates the fake Jij data by averaging over 100 thermal samples
+    def generate_fake_data(times, J_value, theta):
+        averages = 100
+        output_expectations = np.zeros(len(times))
+        for _ in range(averages):  
+            theta_sample = thermal_rejection(theta, 1)[0]     
+            output_expectations += np.cos(2*J_value*((1-theta_sample)**2)*times)
+        return output_expectations/averages
+    #The cost function takes in the value of x we want to optimize over, adn also the argument for theta to pass ot the fake data
+    def cost_function(J_test, theta):
+        get_Y_data_for_J = generate_fake_data(times, J_test, theta)
+        #Get the frequency of the fake data for that J
+        popt, pcov = curve_fit(fit_function, times, get_Y_data_for_J, p0=[0.05, J_test[0]])
+        #The cost function is the value of the observed Omega vs. the target value which is J
+        return np.abs(popt[1]-J_target)
+
+
+    output_Js = np.zeros(len(thetas))
+    for i, theta in enumerate(thetas):
+        result = minimize(cost_function, J_target, args=(theta))
+        output_Js[i] = result.x[0]
+    if debug:
+        plt.plot(thetas, output_Js, 'o')
+        plt.show()
+        plt.plot(times, generate_fake_data(times, output_Js[0], thetas[0]))
+        plt.show()
+    return output_Js
