@@ -152,12 +152,27 @@ def calibrate_sim_Omegas(theta_list, Omega_target, times, debug=False, return_sc
     #print(Omega_round_1)
     #print(Omega_target)
         plt.plot(theta_list, Omega_round_1, 'o')
+    #Perform a linear fit to get the scale factors:
+    #########
+    popt, pcov = curve_fit(lambda x, a, b: a*x + b, theta_list, Omega_round_1)
+    linear_Omegas = popt[0]*np.array(theta_list) + popt[1]
+    scale_factors = Omega_target/linear_Omegas
+    if debug:
+        Omega_round_2 = np.zeros(len(theta_list))
+        sim_data = np.zeros((len(theta_list), len(times)))
+        for i, theta in enumerate(theta_list):
+            sim_data[i, :] = cetina_thermal_exp(times, theta, Omega_target*scale_factors[i])
+        for i in range(len(theta_list)):
+            popt, pcov = curve_fit(cetina_envelope_exp, times, sim_data[i, :], p0=[0.05, Omega_target])
+            Omega_round_2[i] = popt[1]
+        plt.plot(theta_list, Omega_round_2, 'X')
+        plt.plot(theta_list, linear_Omegas)
+        plt.hlines(Omega_target, theta_list[0], theta_list[-1], linestyles='dashed')
         plt.show()
-    scale_factors = Omega_target/Omega_round_1
     if return_scale_factors:
         return scale_factors
     else:
-        return Omega_round_1
+        return Omega_target*np.sqrt(scale_factors)
 
 def zero_temperature_Omega(theta, Omega, times, debug=False, return_scale_factors=True):
     #Step 1: Generate the basic sim data:
@@ -177,7 +192,7 @@ def zero_temperature_Omega(theta, Omega, times, debug=False, return_scale_factor
     correction = Omega_round_1[-1]/Omega
     #We now have theta vs. Omega -- get Omega at zero:
     return Omega_round_1[0]/correction
-    
+
     #Step 3: Get the Scale Factors:
     if debug:
         plt.plot(theta_list, Omega_round_1, 'o')
@@ -189,7 +204,7 @@ def zero_temperature_Omega(theta, Omega, times, debug=False, return_scale_factor
     else:
         return Omega_round_1
 
-def calibrate_Js(J_target, thetas, times, debug=False):
+def calibrate_Js(J_target, thetas, times, debug=False, return_function=False):
     """Returns a calibrated list of Js matching the input of thetas such that the fit of the frequency over the time scale is equal to J
 
     Args:
