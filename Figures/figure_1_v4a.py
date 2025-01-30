@@ -99,7 +99,7 @@ theta_alpha = -42409
 Omega_test = 3750000
 max_time = 10
 times = np.linspace(0, max_time*micro, time_points)
-n_bar = 0.04
+n_bar = 0.08
 delta_thermal = np.array([sample_normal(n_bar) for i in range(delta_samples)])
 delta_thermal_dense = np.array([sample_normal(n_bar) for i in range(dense_samples)])
 
@@ -203,9 +203,10 @@ ax_bi = fig_a.add_subplot(gs[3:7,0:4])
 """ZNE Section/ Plotting"""
 
 #### BASE PLOTTING TIME DOMAIN
+trajectories_color = 'darkgreen'
 for i in range(0,P_thermal_dense.shape[0], delta_samples//100):
-    ax_a.plot(times_dense_plotting, P_thermal_dense[i,:], 'b', alpha=0.02, zorder=-1) 
-ax_a.plot(times_dense_plotting, P_avg_thermal_dense, 'b', alpha=0.9, zorder=-1, label='Noisy Trajectories')
+    ax_a.plot(times_dense_plotting, P_thermal_dense[i,:], trajectories_color, alpha=0.02, zorder=-1) 
+ax_a.plot(times_dense_plotting, P_avg_thermal_dense, trajectories_color, alpha=0.9, zorder=-1, label='Noisy Trajectories')
 ax_a.plot(times_dense_plotting, P_avg_thermal_dense, c='k', label='Averaged Expectation')
 
 
@@ -246,6 +247,11 @@ colorbar = plt.cm.ScalarMappable(cmap=cmap)
 
 # Add color bar to ax_bii
 test_labels = np.asarray([0.001,  0.002, 0.003])#np.power(np.array([0.04, 0.05, 0.06, 0.07]),2)
+#Whole number multiples of 0.001 between n_bar**2 and (n_bar)**2*ZNE_points[-1]
+minimum_label = (n_bar**2//0.001)
+maximum_label = ((n_bar*ZNE_points[-1])**2//0.001)
+test_labels = np.arange(minimum_label, maximum_label+1, 1)*0.001 #include endpoints:
+
 #labels = np.array(['{:.4f}'.format(test_labels[i-1]) for i in range(1,len(ZNE_points))])
 
 normalized_ticks = normalized_ZNE_points_for_color[1:]

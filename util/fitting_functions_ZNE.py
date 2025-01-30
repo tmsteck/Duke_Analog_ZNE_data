@@ -305,7 +305,7 @@ def converge_ZNE_loocv(x, y, y_error = None, remove_first=True, debug=False, ret
         J = np.array([0**i for i in range(min_residual+1 - remove_first)])
         #print(J)
         #print(cov)
-        sigma_0 = np.sqrt(J @ cov @ J.T)
+        sigma_0 = np.sqrt(cov[0,0])#np.sqrt(J @ cov @ J.T)
         print(J)
         print(cov)
         estimate = function(0)
@@ -314,9 +314,9 @@ def converge_ZNE_loocv(x, y, y_error = None, remove_first=True, debug=False, ret
         print(jackknife_residual)
         print(sigma_0)
         if return_order:
-            return function, error, min_residual
+            return function, sigma_0, min_residual
         else:
-            return function, error
+            return function, sigma_0
     else:
         function = order_poly_ZNE(x, y, order=min_residual, remove_first=remove_first, weights=y_error, debug=debug)
         if return_order:
