@@ -19,7 +19,7 @@ def exp_ZNE(x,y, weights=None, debug=False):
         plt.show()
     return exp_fitted    
 
-def order_poly_ZNE(x, y, weights=None, order=3, remove_first=True, debug=False, return_cov=False, even_only=False):
+def order_poly_ZNE(x, y, y_error=None, order=3, remove_first=True, debug=False, return_cov=False, even_only=False):
     #print(order)
     if remove_first:
         def poly_function(x, *coeffs):
@@ -36,7 +36,7 @@ def order_poly_ZNE(x, y, weights=None, order=3, remove_first=True, debug=False, 
         
         p0 = [y[0]] + [0 for _ in range(order-1)]
         #print(p0)
-        popt, pcov = curve_fit(poly_function, x, y, sigma = weights, absolute_sigma = False,p0=p0, maxfev=10000)
+        popt, pcov = curve_fit(poly_function, x, y, sigma = y_error, absolute_sigma = False,p0=p0, maxfev=10000)
         def return_poly(*coeffs):
             coeffs = np.insert(coeffs, 1, 0)
             polynomial = Polynomial(coeffs)
@@ -48,16 +48,20 @@ def order_poly_ZNE(x, y, weights=None, order=3, remove_first=True, debug=False, 
             plt.xlim(0, max(x))
             plt.show()
         if return_cov:
-            return return_poly(*popt), pcov
+            error = np.sqrt(pcov[0,0])
+            return return_poly(*popt), error
         else:
             return return_poly(*popt)
     else:
         poly_func = lambda x, *coeffs: sum([coeffs[i]*x**i for i in range(order+1)])
         p0 = [y[0]] + [0 for _ in range(order)]
-        popt, pcov = curve_fit(poly_func, x, y, sigma = weights, absolute_sigma = False, p0=p0)
+        popt, pcov = curve_fit(poly_func, x, y, sigma = y_error, absolute_sigma = False, p0=p0)
         poly_fitted = lambda x: sum([popt[i]*x**i for i in range(order+1)])
+        #print(pcov)
+        #print(pcov[0,0])
+        error = np.sqrt(pcov[0,0])
         if return_cov:
-            return poly_fitted, pcov
+            return poly_fitted, error
         else:
             return poly_fitted
 
@@ -187,7 +191,7 @@ def converge_ZNE_order(x, y, remove_first=True, debug=False, weights=None):
     functions = [lambda x: y[0]]
     for i in range(1, max_order):
         try:
-            fit = order_poly_ZNE(x, y, order=i, remove_first=remove_first, weights=weights, debug=False)
+            fit = order_poly_ZNE(x, y, order=i, remove_first=remove_first, y_error=weights, debug=False)
             values.append(fit(0))
             functions.append(fit)
             step_size.append(np.abs(fit(0) - values[i - 1]))
@@ -213,7 +217,7 @@ def converge_ZNE_order(x, y, remove_first=True, debug=False, weights=None):
                 plt.vlines(i, 0, max(values), color='red', label='Divergence Start')
                 plt.legend()
                 plt.show()
-                order_poly_ZNE(x, y, order=i, remove_first=remove_first, weights=weights, debug=debug)
+                order_poly_ZNE(x, y, order=i, remove_first=remove_first, y_error=weights, debug=debug)
             # Return the function and index before the divergence starts
             return (functions[i ], i)
     if debug:
@@ -277,7 +281,7 @@ def converge_ZNE_loocv(x, y, y_error = None, remove_first=True, debug=False, ret
     residuals = [np.nan]
     for order in range(1, len(y)-1):
         try:
-            function = lambda x, y, y_error: order_poly_ZNE(x, y, order=order, remove_first=remove_first, weights=y_error, debug=False)  
+            function = lambda x, y, y_error: order_poly_ZNE(x, y, order=order, remove_first=remove_first, y_error=y_error, debug=False)  
             rss = loocv(x, y, y_error, function, evalute)
             
             residuals.append(rss)
@@ -299,8 +303,8 @@ def converge_ZNE_loocv(x, y, y_error = None, remove_first=True, debug=False, ret
         #print(residuals)
         min_residual = 3
     if return_cov:
-        jackknife_function = lambda x, y, y_error: order_poly_ZNE(x, y, order=min_residual, remove_first=remove_first, weights=y_error, debug=False, return_cov=False)
-        function, cov = order_poly_ZNE(x, y, order=min_residual, remove_first=remove_first, weights=y_error, debug=debug, return_cov=return_cov)
+        jackknife_function = lambda x, y, y_error: order_poly_ZNE(x, y, order=min_residual, remove_first=remove_first, y_error=y_error, debug=False, return_cov=False)
+        function, cov = order_poly_ZNE(x, y, order=min_residual, remove_first=remove_first, y_error=y_error, debug=debug, return_cov=return_cov)
         
         J = np.array([0**i for i in range(min_residual+1 - remove_first)])
         #print(J)
@@ -318,7 +322,7 @@ def converge_ZNE_loocv(x, y, y_error = None, remove_first=True, debug=False, ret
         else:
             return function, sigma_0
     else:
-        function = order_poly_ZNE(x, y, order=min_residual, remove_first=remove_first, weights=y_error, debug=debug)
+        function = order_poly_ZNE(x, y, order=min_residual, remove_first=remove_first, y_error=y_error, debug=debug)
         if return_order:
             return function, min_residual
         else:
@@ -697,3 +701,125 @@ def pade_v3(poly, x0, xf, asymptote=0):
 #         plt.legend()
         
 #     return pade_function(0 ,*params, debug=True) + tail
+
+
+def loocv_regularized_ZNE(x,y,y_error, remove_first=False, debug=False, return_order=False, return_function=False):
+    x = np.array(x)
+    assert y.shape == y_error.shape, 'y and y_error must have the same shape'
+    try:
+        assert x.shape[0] == y.shape[0]
+    except:
+        try:
+            assert x.shape[0] == y.shape[1]
+            y = y.T
+            y_error = y_error.T
+        except:
+            raise ValueError('x and y must have the same number of data points in the x axis: x: {}, y: {}, y_error: {}'.format(x.shape, y.shape, y_error.shape))
+    
+    residuals = np.ones((y.shape[0]-1,y.shape[1]))/np.min(y_error)
+    #For each time to do the ZNE on:
+    function = lambda x, y, y_error, order, return_error=False: order_poly_ZNE(x, y, y_error=y_error, order=order, remove_first=remove_first, return_cov = return_error)
+
+    for ti in range(y.shape[1]):
+        #For each possible order:
+        for order in range(1, y.shape[0]-1):
+            
+            if order==1 and remove_first:
+                pass
+            else:
+                res = 0
+                for i in range(y.shape[0]):
+                    x_new = np.delete(x.copy(), i, axis=0)
+                    y_new = np.delete(y[:,ti].copy(), i, axis=0)
+                    y_error_new = np.delete(y_error[:,ti].copy(), i, axis=0)
+                    fit = function(x_new, y_new, y_error_new, order)
+                    if y_error[i,ti] == 0:
+                        r = (fit(x[i]) - y[i,ti])**2
+                    else:
+                        r = (fit(x[i]) - y[i,ti])**2
+                        r = np.power(r/y_error[i,ti], 2)
+                    res += r
+                residuals[order, ti] = res
+    #if debug:
+    #    min_res = np.min(residuals)
+    #    for i in range(1,y.shape[0]-1):
+    #        plt.scatter(residuals[i]/min_res)
+    #    plt.ylim(0.9, 10)
+    #    plt.show()
+            
+    #plt.imshow(residuals)
+    #plt.show()
+    def compute_regularized_orders(residulas, debug=False):
+        #Get the minimum of each residual across the order axis:
+        min_residuals = np.nanargmin(residuals, axis=0)
+        #print(min_residuals)
+        assert min_residuals.shape[0] == y.shape[1], 'Mismatch of the Shape: Min_reduals should have the dimension of the number of time points. y: {}, min_residuals: {}'.format(y.shape, min_residuals.shape)
+        x_temp = np.arange(y.shape[1])
+        linear = lambda x, a, b: a*x + b
+        popt, pcov = curve_fit(linear, x_temp, min_residuals)
+        linear_fit_residuals = linear(x_temp, *popt)
+        orders = np.zeros(y.shape[1], dtype=int)
+        for i in range(y.shape[1]):
+            try:
+                x0 = residuals[int(linear_fit_residuals[i]), i]
+                fit_function = function(x, y[:,i], y_error[:,i], int(linear_fit_residuals[i]))
+                res = 0
+                for j in range(y.shape[0]):
+                    if y_error[j,i] == 0:
+                        r = (fit_function(x[j]) - y[j,i])**2
+                    else:
+                        r = (fit_function(x[j]) - y[j,i])**2
+                        r = np.power(r/y_error[j,i], 2)
+                    res += r
+                x1 = res
+            except:
+                x0 = residuals[-1, i]
+            try:
+                x1 = residuals[int(linear_fit_residuals[i]+1), i]
+                #Compute the overall residual of this order fit:
+                fit_function = function(x, y[:,i], y_error[:,i], int(linear_fit_residuals[i])+1)
+                res = 0
+                for j in range(y.shape[0]):
+                    if y_error[j,i] == 0:
+                        r = (fit_function(x[j]) - y[j,i])**2
+                    else:
+                        r = (fit_function(x[j]) - y[j,i])**2
+                        r = np.power(r/y_error[j,i], 2)
+                    res += r
+                x1 = res
+            except:
+                x1 = residuals[-1, i]+1
+            order = int(linear_fit_residuals[i]) + np.nanargmin((x0, x1))
+            if order == 1 and remove_first:
+                raise ValueError('Order 1 is not allowed when remove_first is True. The "null" residual is probably too low (set to 10)')
+            if order < len(x)-1:
+                orders[i] = order
+            else:
+                orders[i] = len(x)-1
+        if debug:
+            plt.scatter(x_temp, min_residuals, label = 'Min Residuals', marker='x')
+            plt.plot(x_temp, linear_fit_residuals)
+            plt.scatter(x_temp, orders, label='Final Order')
+            plt.scatter(x_temp, np.array([residuals[orders[i], i] for i in range(y.shape[1])])/np.max(np.array([residuals[orders[i], i] for i in range(y.shape[1])])), label='Final Residual')
+            plt.legend()
+            plt.show()
+        return orders
+    orders = compute_regularized_orders(residuals, debug=debug)
+    ZNE_functions = np.zeros(y.shape[1], dtype=object)
+    ZNE_result = np.zeros(y.shape[1])
+    ZNE_errors = np.zeros(y.shape[1])
+    for i in range(y.shape[1]):
+        ZNE_functions[i], ZNE_errors[i] = function(x, y[:,i], y_error[:,i], orders[i], return_error=True)
+        ZNE_result[i] = ZNE_functions[i](0)
+        #ZNE_errors[i] = y_error[0]
+    return_dict = {}
+    if return_order:
+        return_dict['orders'] = orders
+    if return_function:
+        return_dict['functions'] = ZNE_functions
+    return ZNE_result, ZNE_errors, return_dict, residuals
+
+
+    
+    
+    # """From: https://

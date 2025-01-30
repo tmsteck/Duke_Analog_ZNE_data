@@ -134,9 +134,10 @@ def gen_noisy_rabi(Omega, theta, delta_samples, target_time=None):
 data_file = np.load('Figure_1_full_data_ZNE.npz')
 x = data_file['x']
 y = data_file['y']
+print(y.shape)
 y_error = data_file['y_error']
 y_ideal = data_file['y_ideal']
-times = data_file['times']
+times = data_file['times'] /micro
 ZNE_results = data_file['ZNE_results']
 ZNE_error = data_file['ZNE_error']
 dense_x = data_file['dense_x']
@@ -186,12 +187,7 @@ mpl.rcParams.update({
     # "axes.prop_cycle": cycler('color', palettable.colorbrewer.sequential.Reds_9.mpl_colors[1:])
 })
 
-#Create a matplotlib subplots in the layout above
 fig_a = plt.figure()#figsize=(12, 6))
-
-#gs = gridspec.GridSpec(2,5)  # 2x2 grid
-#ax_a = fig_a.add_subplot(gs[0,:])
-#ax_bi = fig_a.add_subplot(gs[1,0:3])
 
 gs = gridspec.GridSpec(8,7)  # 2x2 grid
 ax_a = fig_a.add_subplot(gs[0:3,:])
@@ -199,22 +195,8 @@ ax_bi = fig_a.add_subplot(gs[3:7,0:4])
 
 
 
-#gs = gridspec.GridSpec(2,5)
-#ax_1 = fig.add_subplot(gs[0,:])
-#ax_2 = fig.add_subplot(gs[1,0:3])
-
-
-
-#ax_a = fig_a.add_subplot(211)
-#ax_bi = fig_a.add_subplot(223)
-#The numbers, what do they mean??
-#row gird, column grid, index in grid
-
-
-
 """CREATE THE INSET AXIS"""
 
-# Move the labels inside the plot
 
 """ZNE Section/ Plotting"""
 
@@ -233,8 +215,6 @@ ax_a.plot(times_dense_plotting, P_avg_thermal_dense, c='k', label='Averaged Expe
 
 
 ZNE_points = np.sqrt(np.array([0, 1, 1.1, 1.3, 1.6, 2 ,2.5]))#,2.5, 3, 3.5])
-#ZNE_points = np.array([0,1.0, 1.0810140527710055, 1.3174929343376374, 1.6902785321094298])#, 2.1691699739962274, 2.71537032345343])
-#ZNE_points = np.array([0, 1, 1.1, 1.3, 1.6, 2 ])
 def create_linear_function(y_at_0_5):
     # Given points
     x1, y1 = 0.5, y_at_0_5
@@ -249,6 +229,9 @@ def create_linear_function(y_at_0_5):
         return a * x + b
     
     return linear_function
+
+print(y.shape)
+
 
 linear_func = create_linear_function(0.3)
 normalized_ZNE_points_for_color = linear_func(ZNE_points/max(ZNE_points))
@@ -278,13 +261,11 @@ normalized_ticks = normalized_ZNE_points_for_color[1:]
 ticks_test = linear_func(test_labels/((max(ZNE_points)*baseline)**2))
 cbar = plt.colorbar(colorbar, ax=ax_bi, ticks=ticks_test, orientation='horizontal')#normalized_ZNE_points_for_color[1:])
 cbar.set_ticklabels(test_labels)
-
-ZNE_data = np.zeros((len(times_dense), len(ZNE_points)))
-ZNE_std = np.zeros((len(times_dense), len(ZNE_points)))
-for i in range(len(ZNE_points)):
+print(y.shape)
+assert times.shape[0] == y[:,0].shape[0], 'Shape mismatch: times: {}, y: {}'.format(times.shape, y[:,0].shape[0])
+for i in range(len(x)):
     color = colors[i]
     
-    ZNE_data[:,i], ZNE_std[:,i] = gen_noisy_rabi(Omega_test, baseline*ZNE_points[i], delta_samples)
     if i == 0:
         #ax_bi.plot(times_dense_plotting, ZNE_data[:,i], c='k', ls='--', zorder=1000, alpha=1, label='Zero Temperature')#, label='Analytic')
         ax_bi.plot(times, y_ideal, c='k', ls='--', zorder=1000, alpha=1, label='Zero Temperature')#, label='Analytic')
@@ -295,103 +276,31 @@ for i in range(len(ZNE_points)):
     
 #Draw a vertial line at the 3rd peak:
 peak_index = 84
-#ax_bi.axvline(x=times_dense_plotting[peak_index], c='k')#, linestyle='-')
 
-#print(dense_data.shape)
-#print(dense_data_std.shape)
 def analytic_function(t, Omega, sigma):
     return (1-np.exp(-np.power(t*sigma*Omega,2)/8)*np.cos(Omega_test*t/2))/2
 
 
 
-#ax_bii.plot(np.power(ZNE_points_dense,2), analytic_function(times_dense[peak_index], Omega_test, ZNE_points_dense), color='purple', zorder=-1, label='Analytic')#, alpha=0.2)#, linewidths=0)
-
-#Get the ZNE points
-ZNEd_data = np.zeros((len(times_dense)))
-ZNE_orders = np.zeros((len(times_dense)))+1
-ZNE_orders[len(ZNE_orders)//2:] = 2
-#ZNE_orders[(len(ZNE_orders)//3)*2:] = 3
-
-residuals = np.zeros((len(times_dense)))
-print(ZNE_data.shape)
-print(ZNE_std.shape)
-
-## Ensures the order of the fit doesn't jump around -- we expect it to start around 1, go up to around 2
-for i in range(len(times_dense)):
-    data = ZNE_data[i,1:]
-    error = ZNE_std[i,1:]
-    print(data.shape)
-    print(error.shape)
-    order = int(ZNE_orders[i])
-    function, residual_error = order_poly_ZNE(np.power(ZNE_points[1:]*baseline,2), data, order=order, remove_first=False, return_cov=True, y_error = error)
-    
-    #converge_ZNE_loocv(np.power(ZNE_points[1:]*baseline,2), data[1:], return_order=True, remove_first=False, return_cov=True, y_error=error)
-    ZNEd_data[i] = function(0)
-    #ZNE_orders[i] = order
-    residuals[i] = residual_error
-    
-    #try:
-    #    #print(order, ZNE_orders[i-1])
-    #    if i < 5:
-    #        raise Exception('Escape')
-    #    if np.abs(order - ZNE_orders[i-1]) > 1:
-    #        ZNE_orders[i] = ZNE_orders[i-1]
-    #        function, residuals[i] = order_poly_ZNE(np.power(ZNE_points[1:]*baseline,2), data[1:], order=ZNE_orders[i-1],remove_first=False, return_cov=True, y_error = error)
-    #        ZNEd_data[i] = function(0)
-    #        #converge_ZNE_loocv(ZNE_points[1:]*baseline, data[1:], return_order=True, debug=True)
-    #except:
-    #    pass
-
-#print(residuals)
-#print(ZNE_orders)
-
 
 # Calculate bounds
-upper_bound = ZNEd_data + residuals
-lower_bound = ZNEd_data - residuals
-
-# Replace errorbar with fill_between
-# ax_bi.fill_between(times_dense_plotting, 
-#                    lower_bound, 
-#                    upper_bound, 
-#                    color='blue', 
-#                    alpha=0.3)  # Add transparency
-# ax_bi.plot(times_dense_plotting, ZNEd_data, c='blue', label='Extrapolated')
 
 ax_bi.fill_between(times, 
-                   ZNE_data[peak_index] - ZNE_error[peak_index],
-                   ZNE_data[peak_index] + ZNE_error[peak_index],
+                   ZNE_results - ZNE_error,
+                   ZNE_results + ZNE_error,
                    color='blue', 
                    alpha=0.3)  # Add transparency
-ax_bi.plot(times, ZNE_data, c='blue', label='Extrapolated')
-
-# Optional: Add central line
-#ax_bi.plot(times_dense_plotting, ZNEd_data, 'b-', linewidth=1)
-#ax_bi.scatter(times_dense_plotting, ZNE_orders/max(ZNE_orders))#, c='k', ls='--', label='Extrapolated')
+ax_bi.plot(times, ZNE_results, c='blue', label='Extrapolated')
 
 
 
 ax_a.set_xlabel(r'Time ($\Omega t$)', usetex=1)
 ax_a.set_ylabel('Population Transfer')
 
-#Text Labels:
-#\Xi pointing to error bars
-#\langle O(T)\rangle_{\mathcal{D}_{\theta_i}}
-#\langle O(T) \rangle_{\mathcal{D}_{0}}
-#E^{*}
-# Using data coordinates instead of normalized coordinates
-# Assuming x range is 0 to (max(ZNE_points)*baseline)**2
-# and y range matches ZNE_data range
 
 x_pos = (max(ZNE_points)*baseline)**2 * 0.7  # 70% of x-axis range
 
-#<O(T)>_{D_theta_i} + \xi_i coordinates: line points to: 0, ZNE_data[peak_index,3]
-#<O(T)>_{D_0} coordinates: line points to: 0, ZNE_data[peak_index,0]
-#E^{*}, line points to: 0, function_best(0)
 
-
-# Position text at different y-levels
-# Get x position for labels (e.g. 70% of x-axis range)
 x_pos = (max(ZNE_points)*baseline)**2 * 0.7
 
 
@@ -415,12 +324,12 @@ fig_a.tight_layout(pad=0.01, h_pad=0.2, w_pad=0.2)
 
 
 #All Subfigure stuff
-x, y = 1.035, -0.42
-ax_bii = inset_axes(ax_bi, width="90%", height="97%", bbox_to_anchor=(x, y, 0.6, 1.38), bbox_transform=ax_bi.transAxes, loc='lower left')
+x_coord, y_coord = 1.035, -0.42
+ax_bii = inset_axes(ax_bi, width="90%", height="97%", bbox_to_anchor=(x_coord, y_coord, 0.6, 1.38), bbox_transform=ax_bi.transAxes, loc='lower left')
 
 # Define the x-range and y-range to zoom in on
 x_inset_range = (8, 9)
-y_inset_range = (min(ZNE_data[peak_index,:])-.05, 1.05)
+y_inset_range = (np.min(y[peak_index])-.05, 1.05)
 
 # Plot data in the inset axes
 # ax_ci.plot(x, y, label='Inset Data')  # Uncomment and replace with actual data
@@ -437,47 +346,39 @@ connector_lines[3].set_visible(False)  # Hide the upper-right connector line
 #Add ticks to the inset indicator:
 
 #Plot the extrapolation:
-for i in range(len(ZNE_points)):
+for i in range(len(x)):
     color = colors[i]
+    print(color)
     if i == 0:
-        color = 'k'
-        #ax_bii.errorbar(np.power(ZNE_points[i]*baseline,2), ZNE_data[peak_index,i], yerr=ZNE_std[peak_index,i], color=color, fmt='o', capsize=0, markersize = 3)
-        ax_bii.hlines(ZNE_data[peak_index,i],0, (max(ZNE_points)*baseline)**2,  color=color, linestyle='--', label='Noiseless')
+        color = 'k' 
+        ax_bii.hlines(y_ideal[peak_index],0, x[-1],  color=color, linestyle='--', label='Noiseless')
     else:
-        ax_bii.errorbar(np.power(ZNE_points[i]*baseline,2), ZNE_data[peak_index,i], yerr=ZNE_std[peak_index,i], color=color, fmt='o', capsize=2, markersize = 3)
+        ax_bii.errorbar(x[i], y[peak_index,i], yerr=y_error[peak_index,i], color=color, fmt='o', capsize=2, markersize = 3, zorder=1000)
 
 
 
-#function_best, fit_error = converge_ZNE_loocv(np.power(ZNE_points[1:]*baseline,2), ZNE_data[peak_index,1:], remove_first=False, return_order=False, return_cov=True)
-order = int(ZNE_orders[peak_index])
-function_best, fit_error = order_poly_ZNE(np.power(ZNE_points[1:]*baseline,2), ZNE_data[peak_index,1:], order=order, remove_first=False, return_cov=True, y_error = ZNE_std[peak_index,1:])
-ZNE_points_dense = np.linspace(0, max(ZNE_points), 50)*baseline
-dense_data     = np.zeros((len(times_dense_plotting), len(ZNE_points_dense)))
-dense_data_std = np.zeros((len(times_dense_plotting), len(ZNE_points_dense)))
-for i in tqdm(range(len(ZNE_points_dense))):
-    dense_data[:,i], dense_data_std[:,i] = gen_noisy_rabi(Omega_test, ZNE_points_dense[i], delta_samples)
 
 
-ax_bii.plot(np.power(ZNE_points_dense,2), function_best(np.power(ZNE_points_dense,2)), c='blue', label='Zero Noise Extrapolation')
+ax_bii.plot(dense_x, ZNE_y_dense[peak_index], c='blue', label='Zero Noise Extrapolation')
 #Make this a fill between:
-ax_bii.errorbar(0, function_best(0), yerr=fit_error, c='blue', fmt='o', capsize=2, markersize = 3)
+ax_bii.errorbar(0, ZNE_results[peak_index], yerr=ZNE_error[peak_index], c='blue', fmt='o', capsize=2, markersize = 3)
 
 
 ax_bii.annotate(r'$\langle \hat{O}(T)\rangle_{\theta_i} + \xi_i$',
-                xy=((ZNE_points[4]*baseline)**2, ZNE_data[peak_index,4]),  # point to annotate
-                xytext=(0.0, 0.7),  # text position
+                xy=(x[3], y[peak_index,3]),  # point to annotate
+                xytext=(0.0, 0.55),  # text position
                 ha='left',
                 va='center',
                 arrowprops=dict(
                     arrowstyle='->',
-                    color=colors[4],
+                    color=colors[3],
                     connectionstyle='arc3,rad=0'
                 ), 
                 color=colors[3], usetex=1)
 
 ax_bii.annotate(r'$\langle \hat{O}(T) \rangle_{0}$',
-                xy=(0.0005, ZNE_data[peak_index,0]+0.01),
-                xytext=(x_pos*0.7, ZNE_data[peak_index,0]+0.03),
+                xy=(0.0005, y_ideal[peak_index]+0.01),
+                xytext=(x_pos*0.7, y_ideal[peak_index]+0.03),
                 ha='left',
                 va='center',
                 arrowprops=dict(
@@ -488,8 +389,8 @@ ax_bii.annotate(r'$\langle \hat{O}(T) \rangle_{0}$',
                 color="k", usetex=1)
 
 ax_bii.annotate(r'$E^{*}$',
-                xy=(0+0.0002, function_best(0)),
-                xytext=(x_pos, function_best(0)-0.05),
+                xy=(0+0.0002, ZNE_results[peak_index]),
+                xytext=(x_pos, ZNE_results[peak_index]-0.05),
                 ha='left',
                 va='center',
                 arrowprops=dict(
@@ -529,14 +430,14 @@ ax_a.legend(loc='lower right',ncol=2)
 
 #Export: X, Y, Y_error, Y_ideal
 # (n_bar*ZNE_points)**2, ZNE_data[:,1:], ZNE_std[:1,:], ZNE_data[:,0]
-np.savez('figure_1_data.npz', x=(n_bar*ZNE_points[1:])**2, y=ZNE_data[:,1:], y_error=ZNE_std[:,1:], y_ideal=ZNE_data[:,0], times=times)
+#np.savez('figure_1_data.npz', x=(n_bar*ZNE_points[1:])**2, y=ZNE_data[:,1:], y_error=ZNE_std[:,1:], y_ideal=ZNE_data[:,0], times=times)
 # ZNE_data[1:,], ZNE_std[1:,]
 
 
 #print(fig_a)
-fig_a.savefig('Figure_1_v5.png', dpi=600)
-fig_a.savefig('Figure_1_v5.svg', dpi=600)
-fig_a.savefig('Figure_1_v5.pdf', dpi=600)
+fig_a.savefig('Figure_1_v6.png', dpi=600)
+fig_a.savefig('Figure_1_v6.svg', dpi=600)
+fig_a.savefig('Figure_1_v6.pdf', dpi=600)
 
 #fig2.savefig('Figure_1_v4b.png', dpi=600)
 #fig2.savefig('Figure_1_v4b.svg', dpi=600)
